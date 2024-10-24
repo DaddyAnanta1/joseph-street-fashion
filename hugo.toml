@@ -1,4 +1,4 @@
-baseURL = 'http://localhost:8000/'
+baseURL = 'http://https://joseph-street-fashion.vercel.app/'
 languageCode = 'en-us'
 title = 'Joseph Street Fashion Pemda'
 
