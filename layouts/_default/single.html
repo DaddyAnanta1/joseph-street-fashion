@@ -1,0 +1,147 @@
+{{ define "main" }}
+<div class="single">
+  <div class="singleHead">
+    <div class="singleHeadImgContainer">
+      <img src="{{ .Params.imageBig }}" alt="{{ .Title }}" class="singleHeadImg" id="mainImage" onclick="resetImage()">
+    </div>
+    <div class="singleHeadTexts">
+      <h1 class="singleHeadTitle">{{ .Title }}</h1>
+      <div class="singleHeadDetail">
+        {{ range (.GetTerms "categories") }}
+          <a href="{{ .Permalink }}" class="singleCategory">{{ .Name }}</a>
+        {{ end }}
+        <span class="singleSize">Ukuran: {{ .Params.size }}</span>
+        <span class="singleSize">Tersisa: {{ .Params.tersisa }} Item</span>
+        <span class="singleSize">Harga: {{ .Params.price }}</span>
+        <div class="singleAddProduct">
+          <button class="addProductBtn" 
+                  data-image="{{ .Params.image }}" 
+                  data-title="{{ .Title }}" 
+                  data-price="{{ .Params.price }}" 
+                  data-tersisa="{{ .Params.tersisa }}">+ Keranjang</button>
+        </div>
+      </div>
+      <p class="singleHeadDesc">{{ .Params.description }}</p>
+    </div>
+  </div>
+  <div class="singleListImage">
+    <div class="imageList">
+      {{ if .Params.imageBig }}
+        <img src="{{ .Params.imageBig }}" alt="{{ .Title }}" onclick="changeMainImage('{{ .Params.imageBig }}')">
+      {{ end }}
+      {{ if .Params.imageBig1 }}
+        <img src="{{ .Params.imageBig1 }}" alt="{{ .Title }}" onclick="changeMainImage('{{ .Params.imageBig1 }}')">
+      {{ end }}
+      {{ if .Params.imageBig2 }}
+        <img src="{{ .Params.imageBig2 }}" alt="{{ .Title }}" onclick="changeMainImage('{{ .Params.imageBig2 }}')">
+      {{ end }}
+      {{ if .Params.imageBig3 }}
+        <img src="{{ .Params.imageBig3 }}" alt="{{ .Title }}" onclick="changeMainImage('{{ .Params.imageBig3 }}')">
+      {{ end }}
+      {{ if .Params.videoUrl }}
+        <img src="{{ .Params.videoThumbnail }}" alt="Video Thumbnail" onclick="changeMainVideo('{{ .Params.videoUrl }}', '{{ .Params.imageBig }}')" style="cursor: pointer;">
+      {{ end }}
+    </div>
+  </div>
+  <div class="singleBottom">
+    <div class="singleContent">{{ .Content }}</div>
+    <div class="singleRightBar">
+      {{ partial "rightBar" . }}
+    </div>
+  </div>
+  <!-- Navigasi untuk halaman sebelumnya dan berikutnya -->
+  <div class="pagination-navigation">
+    {{ with .Prev }}
+      <a href="{{ .Permalink }}" class="prevPage"><i class="fas fa-chevron-left" style="font-size: 15px;line-height: 20px;" id="left-arrow"></i>
+        Previous Page</a>
+    {{ end }}
+    
+    {{ with .Next }}
+      <a href="{{ .Permalink }}" class="nextPage">Next Page <i class="fas fa-chevron-right" style="font-size: 15px;line-height: 20px;" id="right-arrow"></i></a>
+    {{ end }}
+  </div>
+
+
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // Menambahkan produk ke keranjang
+    document.querySelectorAll('.addProductBtn').forEach(button => {
+      button.addEventListener('click', () => {
+        const image = button.getAttribute('data-image');
+        const title = button.getAttribute('data-title');
+        const priceText = button.getAttribute('data-price');
+        const tersisa = button.getAttribute('data-tersisa');
+        const price = parseInt(priceText.replace(/[^\d]/g, '')); // Menghapus karakter bukan angka
+
+        // Cek apakah item sudah ada di keranjang
+        const existingItem = Array.from(document.getElementById('cartItems').children).find(item => {
+          return item.querySelector('p').textContent === title;
+        });
+
+        if (existingItem) {
+          // Jika item sudah ada, tambahkan kuantitas
+          const quantitySpan = existingItem.querySelector('.item-quantity');
+          let quantity = parseInt(quantitySpan.textContent);
+          quantity++;
+          quantitySpan.textContent = quantity;
+        } else {
+          // Tambahkan item baru ke keranjang
+          const cartItem = document.createElement('div');
+          cartItem.classList.add('cart-item');
+          cartItem.setAttribute('data-tersisa', tersisa); // Menyimpan informasi tersisa
+          cartItem.innerHTML = `
+            <img src="${image}" alt="${title}">
+            <p>${title}</p>
+            <p>${priceText}</p>
+            <button class="decrease-item" onclick="decreaseQuantity(this)">-</button>
+            <span class="item-quantity">1</span>
+            <button class="increase-item" onclick="increaseQuantity(this)">+</button>
+            <button class="delete-item" onclick="deleteItem(this)">X</button>
+          `;
+          document.getElementById('cartItems').appendChild(cartItem);
+
+          // Tampilkan keranjang jika belum ditampilkan
+          document.getElementById('cart-accordion').classList.add('active');
+        }
+
+        updateTotalPrice(); // Update total harga setelah menambah item
+      });
+    });
+  });
+  let currentMedia = 'image'; // Status media saat ini
+
+  function changeMainImage(imageSrc) {
+    const mainImage = document.getElementById('mainImage');
+    mainImage.src = imageSrc;
+    currentMedia = 'image'; // Set status menjadi gambar
+  }
+
+  function changeMainVideo(videoSrc, fallbackImage) {
+    const mainImage = document.getElementById('mainImage');
+    mainImage.outerHTML = `<video controls autoplay style="width: 100%; cursor: pointer;" onclick="returnToImage('${fallbackImage}')">
+      <source src="${videoSrc}" type="video/mp4">
+      Your browser does not support the video tag.
+    </video>`;
+    currentMedia = 'video'; // Set status menjadi video
+  }
+
+  function returnToImage(imageSrc) {
+    const mainImageContainer = document.createElement('div');
+    mainImageContainer.innerHTML = `<img src="${imageSrc}" alt="Main Image" class="singleHeadImg" id="mainImage" onclick="resetImage()">`;
+    const mainImage = document.getElementById('mainImage');
+    mainImage.replaceWith(mainImageContainer.firstChild); // Ganti video dengan gambar
+    currentMedia = 'image'; // Kembali ke status gambar
+  }
+
+  function resetImage() {
+    const mainImage = document.getElementById('mainImage');
+    if (currentMedia === 'video') {
+      const fallbackImage = mainImage.src; // Ambil gambar sebelumnya untuk reset
+      returnToImage(fallbackImage);
+    }
+  }
+  // Fungsi lain yang ada di baseof.html tetap sama
+</script>
+{{ end }}

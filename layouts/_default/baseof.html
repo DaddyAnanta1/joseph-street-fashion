@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="{{ or .Params.description .Site.Params.description }}">
+    <link rel="icon" href="/images/icon2.png" type="image/png">
+    <link rel="stylesheet" href="/styles/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@100;300;400;500;700;900&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <title>{{ .Title }}</title>
+</head>
+
+<body>
+
+    {{ partial "navbar" . }}
+    <div id="cart-accordion" class="accordion">
+        <h3>Shopping Cart</h3>
+        <div class="scroll-container">
+            <div class="card-items" id="cartItems"></div>
+        </div>
+        <div class="total-price">
+            <p>Total Pembelian: <span id="totalPrice">Rp 0</span></p>
+        </div>
+        <div class="cart-btn">
+            <button class="tutup" onclick="toggleInfo()">Tutup</button>
+            <button class="checkout" onclick="handleCheckout()">Check Out</button>
+        </div>
+    </div>
+    <div class="Home-image">
+        <img src="/images/3.jpg" alt="Sepatu" loading="lazy">
+        <h1>Sepatu untuk Setiap Langkah, untuk Setiap Cerita</h1>
+        <a class="Choice" href="#categories">Mulai Langkahmu <i class="fas fa-arrow-right"></i></a>
+    </div>
+
+    <div class="category_page" id="categories">
+        {{ range $.Site.Taxonomies.categories.ByCount }}
+        <a class="category-link" href="/categories/{{ .Name }}">
+            <span class="category-name">{{ .Name | title }}</span>
+        </a>
+        {{ end }}
+    </div>
+
+    <div class="container">
+        {{ block "main" . }} {{ end }}
+        {{ partial "footer" . }}
+    </div>
+
+    <script src="/js/app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-python.min.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const cartItemsContainer = document.getElementById('cartItems');
+
+            // Load cart items from localStorage
+            loadCartItems();
+
+            // Menambahkan produk ke keranjang
+            document.querySelectorAll('.addProductBtn').forEach(button => {
+                button.addEventListener('click', () => {
+                    const image = button.getAttribute('data-image');
+                    const title = button.getAttribute('data-title');
+                    const priceText = button.getAttribute('data-price');
+                    const tersisa = button.getAttribute('data-tersisa');
+                    const price = parseInt(priceText.replace(/[^\d]/g, ''));
+
+                    // Create item object
+                    const cartItem = {
+                        image: image,
+                        title: title,
+                        price: priceText,
+                        quantity: 1,
+                        tersisa: tersisa
+                    };
+
+                    // Check if item already exists in localStorage
+                    const existingItems = JSON.parse(localStorage.getItem('cartItems')) || [];
+                    const existingItemIndex = existingItems.findIndex(item => item.title === title);
+
+                    if (existingItemIndex > -1) {
+                        // Item already exists, increase quantity
+                        existingItems[existingItemIndex].quantity++;
+                    } else {
+                        // New item, add to cart
+                        existingItems.push(cartItem);
+                    }
+
+                    // Update localStorage
+                    localStorage.setItem('cartItems', JSON.stringify(existingItems));
+                    updateCartDisplay(existingItems);
+                    updateTotalPrice(); // Update total price
+
+                    // Show cart accordion automatically
+                    const cartAccordion = document.getElementById('cart-accordion');
+                    cartAccordion.classList.add('active');
+                });
+            });
+        });
+
+        function loadCartItems() {
+            const cartItems = JSON.parse(localStorage.getItem('cartItems')) || [];
+            updateCartDisplay(cartItems);
+        }
+
+        function updateCartDisplay(cartItems) {
+            const cartItemsContainer = document.getElementById('cartItems');
+            cartItemsContainer.innerHTML = ''; // Clear existing items
+
+            // Group items by title
+            const groupedItems = cartItems.reduce((acc, item) => {
+                if (!acc[item.title]) {
+                    acc[item.title] = { ...item, quantity: 0 }; // Create a new entry
+                }
+                acc[item.title].quantity += item.quantity; // Increment the quantity
+                return acc;
+            }, {});
+
+            // Display the grouped items
+            for (const key in groupedItems) {
+                const item = groupedItems[key];
+                const cartItem = document.createElement('div');
+                cartItem.classList.add('cart-item');
+                cartItem.setAttribute('data-tersisa', item.tersisa); // Store tersisa info
+                cartItem.innerHTML = `
+                <img src="${item.image}" alt="${item.title}">
+                <p>${item.title}</p> 
+                <p>${item.price}</p>
+                <button class="decrease-item" onclick="decreaseQuantity(this)">-</button>
+                <span class="item-quantity">${item.quantity}</span>
+                <button class="increase-item" onclick="increaseQuantity(this)">+</button>
+                <button class="delete-item" onclick="deleteItem(this)">X</button>
+            `;
+                cartItemsContainer.appendChild(cartItem);
+            }
+        }
+
+        function updateTotalPrice() {
+            const cartItems = JSON.parse(localStorage.getItem('cartItems')) || [];
+            let totalPrice = 0;
+
+            cartItems.forEach(item => {
+                totalPrice += item.quantity * parseInt(item.price.replace(/[^\d]/g, ''));
+            });
+
+            document.getElementById('totalPrice').textContent = `Rp ${totalPrice}.000`;
+        }
+
+        function decreaseQuantity(button) {
+            const cartItem = button.closest('.cart-item');
+            const title = cartItem.querySelector('p').textContent;
+            const existingItems = JSON.parse(localStorage.getItem('cartItems')) || [];
+            const itemIndex = existingItems.findIndex(item => item.title === title);
+
+            if (existingItems[itemIndex].quantity > 1) {
+                existingItems[itemIndex].quantity--;
+            } else {
+                // Remove item if quantity is 1
+                existingItems.splice(itemIndex, 1);
+            }
+
+            localStorage.setItem('cartItems', JSON.stringify(existingItems));
+            updateCartDisplay(existingItems);
+            updateTotalPrice(); // Update total price
+        }
+
+        function increaseQuantity(button) {
+            const cartItem = button.closest('.cart-item');
+            const title = cartItem.querySelector('p').textContent;
+            const existingItems = JSON.parse(localStorage.getItem('cartItems')) || [];
+            const itemIndex = existingItems.findIndex(item => item.title === title);
+
+            if (existingItems[itemIndex].quantity < parseInt(existingItems[itemIndex].tersisa)) {
+                existingItems[itemIndex].quantity++;
+            } else {
+                alert('Anda telah mencapai item terakhir!');
+            }
+
+            localStorage.setItem('cartItems', JSON.stringify(existingItems));
+            updateCartDisplay(existingItems);
+            updateTotalPrice(); // Update total price
+        }
+
+        function deleteItem(button) {
+            const cartItem = button.closest('.cart-item');
+            const title = cartItem.querySelector('p').textContent;
+            const existingItems = JSON.parse(localStorage.getItem('cartItems')) || [];
+            const itemIndex = existingItems.findIndex(item => item.title === title);
+
+            existingItems.splice(itemIndex, 1); // Remove item
+            localStorage.setItem('cartItems', JSON.stringify(existingItems));
+            updateCartDisplay(existingItems);
+            updateTotalPrice(); // Update total price
+        }
+
+        function toggleInfo() {
+            const accordion = document.getElementById('cart-accordion');
+            accordion.classList.toggle('active');
+        }
+
+        // Save scroll position before leaving the page
+        window.addEventListener('beforeunload', () => {
+            localStorage.setItem('scrollPosition', window.scrollY);
+        });
+
+        // Restore scroll position when the page loads
+        window.addEventListener('load', () => {
+            const scrollPosition = localStorage.getItem('scrollPosition');
+            if (scrollPosition) {
+                window.scrollTo(0, parseInt(scrollPosition));
+            }
+        });
+
+
+        function handleCheckout() {
+            const totalPrice = document.getElementById('totalPrice').textContent;
+            const cartItems = JSON.parse(localStorage.getItem('cartItems')) || [];
+            const itemDetails = cartItems.map(item => {
+                return `${item.title} (Qty: ${item.quantity})`;
+            }).join(', ');
+
+            const buyerName = prompt("Masukkan Nama Anda:");
+            const buyerAddress = prompt("Masukkan Alamat Anda:");
+
+            if (buyerName && buyerAddress) {
+                const message = `
+====================================
+          *Struk Pemesanan*
+====================================
+Nama        : ${buyerName}
+Alamat      : ${buyerAddress}
+------------------------------------
+Total Pembelian  : ${totalPrice}
+------------------------------------
+Detail Item:
+${itemDetails.split(', ').map(item => `- ${item}`).join('\n')}
+====================================
+ Terima kasih telah berbelanja!
+====================================
+`;
+                const whatsappNumber = '+6285763754009';
+                const whatsappURL = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(message)}`;
+                window.open(whatsappURL, '_blank');
+            } else {
+                alert("Nama dan alamat harus diisi!");
+            }
+        }
+    </script>
+
+
+
+</body>
+
+</html>

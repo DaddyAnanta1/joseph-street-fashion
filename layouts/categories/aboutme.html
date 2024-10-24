@@ -1,0 +1,70 @@
+{{ define "main" }}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="{{ or .Params.description .Site.Params.description }}">
+    <link rel="icon" href="/images/icon2.png" type="image/png">
+    <link rel="stylesheet" href="/styles/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap" rel="stylesheet">
+    
+    <title>{{ .Title }}</title>
+</head>
+<body>
+    
+    {{ partial "navbar" . }}
+    <div class="container">
+        <h1>About Me</h1>
+        <p>Ini adalah halaman tentang saya. Tambahkan informasi yang relevan di sini.</p>
+        
+        {{ block "main" . }} {{ end }}
+        
+        {{ partial "footer" . }}
+    </div>
+    <script src="/js/app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-python.min.js"></script>
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const searchInput = document.getElementById('search');
+        const resultsDiv = document.getElementById('results');
+        const listItems = document.querySelectorAll('.listItem'); // Pastikan ini ada di halaman
+
+        searchInput.addEventListener('input', () => {
+            const query = searchInput.value.toLowerCase();
+            resultsDiv.innerHTML = ''; // Clear previous results
+
+            let hasResults = false;
+
+            listItems.forEach(item => {
+                const title = item.querySelector('.listItemTitle a').textContent.toLowerCase();
+                const description = item.querySelector('.listItemDesc').textContent.toLowerCase();
+
+                if (title.includes(query) || description.includes(query)) {
+                    hasResults = true; // Ada hasil yang cocok
+                    const resultItem = document.createElement('div');
+                    resultItem.className = 'result-item';
+                    resultItem.innerHTML = `<a href="${item.querySelector('.listItemTitle a').href}">${title}</a>`;
+                    resultsDiv.appendChild(resultItem);
+                }
+            });
+
+            if (!hasResults) {
+                resultsDiv.innerHTML = '<div>Tidak ada hasil ditemukan.</div>';
+            }
+        });
+
+        // Menyembunyikan hasil pencarian saat mengklik di luar
+        document.addEventListener('click', (event) => {
+            const isClickInside = searchInput.contains(event.target) || resultsDiv.contains(event.target);
+            if (!isClickInside) {
+                resultsDiv.innerHTML = ''; // Clear results
+            }
+        });
+    });
+    </script>
+
+</body>
+</html>
+{{ end }}
