@@ -6,7 +6,9 @@ paginate = 12
 
 [params]
     description = "The Fashion Store"
-    dateFormat= "Jan 2, 2006"
+    dateFormat= "Jan 2, 2023"
+    author = "Daddy Ananta"
+    keywords = "fashion, store, medan, trends, sepatu, sandal"
 [taxonomies]
     category = "categories"
     author = "authors"
@@ -20,12 +22,6 @@ paginate = 12
 changefreq = "monthly"
 priority = 0.5
 
-#Seo
-[params]
-    description = "Joseph Street Fashion Pemda"
-    dateFormat= "Jan 2, 2023"
-    author = "Daddy Ananta"
-    keywords = "fashion, store, medan, trends, sepatu, sandal"
 
 [outputs]
 home = ["HTML", "JSON"]
