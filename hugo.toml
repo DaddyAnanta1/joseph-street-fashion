@@ -1,0 +1,31 @@
+baseURL = 'http://joseph-street-fashion-pemda2.vercel.app/'
+languageCode = 'en-us'
+title = 'Joseph Street Fashion Pemda'
+
+paginate = 12
+
+[params]
+    description = "The Fashion Store"
+    dateFormat= "Jan 2, 2006"
+[taxonomies]
+    category = "categories"
+    author = "authors"
+
+[[menu.main]]
+    name = "About Me"
+    url = "/about/"
+    weight = 1
+
+[sitemap]
+changefreq = "monthly"
+priority = 0.5
+
+#Seo
+[params]
+    description = "Joseph Street Fashion Pemda"
+    dateFormat= "Jan 2, 2023"
+    author = "Daddy Ananta"
+    keywords = "fashion, store, medan, trends, sepatu, sandal"
+
+[outputs]
+home = ["HTML", "JSON"]
