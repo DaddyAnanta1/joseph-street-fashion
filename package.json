@@ -1,5 +1,6 @@
 {
   "scripts": {
-    "build": "hugo --gc "
+    "build": "hugo --gc",
+    "deploy": "vercel --prod --force"
   }
 }
